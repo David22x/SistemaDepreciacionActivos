@@ -1,0 +1,15 @@
+$kind: http-request
+name: " http://localhost:5249/api/Auth/validar"
+description: ""
+url: " http://localhost:5249/api/Auth/validar"
+method: GET
+headers:
+  - key: Authorization
+    value: Bearer {{json_web_token_0q0z}}
+    disabled: false
+    description: "{{json_web_token_0q0z}}"
+  - key: Authorization
+    value: ""
+    disabled: true
+    description: ""
+order: 1789793001203

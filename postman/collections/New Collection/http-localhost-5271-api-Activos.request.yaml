@@ -1,0 +1,21 @@
+$kind: http-request
+name: http://localhost:5271/api/Activos
+description: ""
+url: http://localhost:5271/api/Activos
+method: POST
+headers:
+  Authorization: "{{bearer_token_07n0}}"
+body:
+  type: json
+  content: "{\r
+
+    \  \"nombre\": \"Laptop Dell XPS 15\",\r
+
+    \  \"valorOriginal\": 1500.00,\r
+
+    \  \"fechaAdquisicion\": \"2024-01-15T00:00:00\",\r
+
+    \  \"categoriaId\": 1\r
+
+    }"
+order: 4499547309271760

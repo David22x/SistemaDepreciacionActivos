@@ -1,0 +1,8 @@
+$kind: http-request
+name: http://localhost:5271/api/Categorias
+description: ""
+url: http://localhost:5271/api/Categorias
+method: GET
+headers:
+  Authorization: "{{bearer_token_07n0}}"
+order: 4496039156649674

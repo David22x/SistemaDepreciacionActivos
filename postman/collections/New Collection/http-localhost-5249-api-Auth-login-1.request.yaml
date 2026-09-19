@@ -1,0 +1,9 @@
+$kind: http-request
+name: http://localhost:5249/api/Auth/login
+description: ""
+url: http://localhost:5249/api/Auth/login
+method: POST
+body:
+  type: json
+  content: '{ "nombreUsuario": "admin", "password": "Password123" }'
+order: 4434471737614196

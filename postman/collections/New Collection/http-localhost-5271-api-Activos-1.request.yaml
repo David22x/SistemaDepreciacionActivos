@@ -1,0 +1,8 @@
+$kind: http-request
+name: http://localhost:5271/api/Activos
+description: ""
+url: http://localhost:5271/api/Activos
+method: GET
+headers:
+  Authorization: "{{bearer_token_009q}}"
+order: 4499871967369148

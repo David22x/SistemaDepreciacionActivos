@@ -1,0 +1,21 @@
+$kind: http-request
+name: http://localhost:5271/api/Activos/1
+description: ""
+url: http://localhost:5271/api/Activos/1
+method: PUT
+headers:
+  Authorization: "{{bearer_token_0gu7}}"
+body:
+  type: json
+  content: "{\r
+
+    \  \"nombre\": \"Laptop Dell XPS 15 (actualizada)\",\r
+
+    \  \"valorOriginal\": 1600.00,\r
+
+    \  \"fechaAdquisicion\": \"2024-01-15T00:00:00\",\r
+
+    \  \"categoriaId\": 1\r
+
+    }"
+order: 4500320493005044
