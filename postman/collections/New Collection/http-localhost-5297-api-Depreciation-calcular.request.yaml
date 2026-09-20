@@ -1,0 +1,17 @@
+$kind: http-request
+name: http://localhost:5297/api/Depreciation/calcular
+description: ""
+url: http://localhost:5297/api/Depreciation/calcular
+method: POST
+headers:
+  Authorization: "{{bearer_token_116y}}"
+body:
+  type: json
+  content: "{\r
+
+    \  \"activoId\": 2,\r
+
+    \  \"fechaConsulta\": \"2024-07-15T00:00:00\"\r
+
+    }"
+order: 4502537818268331

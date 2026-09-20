@@ -24,3 +24,9 @@ variables:
   - key: json_web_token_0lk4
     secret: true
     disabled: false
+  - key: bearer_token_116y
+    secret: true
+    disabled: false
+  - key: json_web_token_14ac
+    secret: true
+    disabled: false

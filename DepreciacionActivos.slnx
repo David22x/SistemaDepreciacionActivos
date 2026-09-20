@@ -8,5 +8,11 @@
     <Project Path="AuthService/AuthService.API/AuthService.API.csproj" />
     <Project Path="AuthService/AuthService.Domain/AuthService.Domain.csproj" />
     <Project Path="AuthService/AuthService.Infraestructure/AuthService.Infraestructure.csproj" />
+    <Project Path="AuthService/AuthService.Infrastructure/AuthService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/DepreciationService/">
+    <Project Path="DepreciationService/DepreciationService.API/DepreciationService.API.csproj" />
+    <Project Path="DepreciationService/DepreciationService.Domain/DepreciationService.Domain.csproj" />
+    <Project Path="DepreciationService/DepreciationService.Infrastructure/DepreciationService.Infrastructure.csproj" />
   </Folder>
 </Solution>
