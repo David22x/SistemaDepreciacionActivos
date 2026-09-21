@@ -15,6 +15,9 @@
     <Project Path="DepreciationService/DepreciationService.Domain/DepreciationService.Domain.csproj" />
     <Project Path="DepreciationService/DepreciationService.Infrastructure/DepreciationService.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/Gateway/">
+    <Project Path="Gateway/Gateway/Gateway.csproj" />
+  </Folder>
   <Folder Name="/ReportService/">
     <Project Path="ReportService/ReportService.API/ReportService.API.csproj" />
     <Project Path="ReportService/ReportService.Domain/ReportService.Domain.csproj" />
