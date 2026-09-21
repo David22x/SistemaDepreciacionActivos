@@ -1,0 +1,111 @@
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using ReportService.Domain.Models;
+
+namespace ReportService.Infrastructure.Services;
+
+public class PdfGeneratorService
+{
+    public byte[] GenerarReporte(ReporteDepreciacionDto datos)
+    {
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(2, Unit.Centimetre);
+                page.DefaultTextStyle(x => x.FontSize(11).FontFamily("Arial"));
+
+                // ---- HEADER ----
+                page.Header().Column(col =>
+                {
+                    col.Item().Text("Reporte de Depreciación de Activos")
+                        .SemiBold().FontSize(20).FontColor(Colors.Blue.Darken2);
+                    col.Item().Text($"Generado: {DateTime.Now:dd/MM/yyyy HH:mm}")
+                        .FontSize(10).FontColor(Colors.Grey.Medium);
+                    col.Item().PaddingTop(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten1);
+                });
+
+                // ---- CONTENT ----
+                page.Content().PaddingVertical(15).Column(col =>
+                {
+                    col.Spacing(15);
+
+                    // Datos generales
+                    col.Item().Text("Datos del Activo").Bold().FontSize(14);
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(1);
+                            columns.RelativeColumn(2);
+                        });
+
+                        void Fila(string label, string valor)
+                        {
+                            table.Cell().Background(Colors.Grey.Lighten4)
+                                .Padding(5).Text(label).Bold();
+                            table.Cell().Padding(5).Text(valor);
+                        }
+
+                        Fila("Activo", datos.NombreActivo);
+                        Fila("Categoría", datos.Categoria);
+                        Fila("Fecha de consulta", datos.FechaConsulta.ToString("dd/MM/yyyy"));
+                        Fila("Meses transcurridos", datos.MesesTranscurridos.ToString());
+                    });
+
+                    // Tabla de depreciación
+                    col.Item().Text("Detalle de Depreciación").Bold().FontSize(14);
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(2); // Concepto
+                            columns.RelativeColumn(1); // Valor
+                        });
+
+                        // Header
+                        table.Header(header =>
+                        {
+                            header.Cell().Background(Colors.Blue.Darken2)
+                                .Padding(6).Text("Concepto").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Blue.Darken2)
+                                .Padding(6).Text("Valor (USD)").FontColor(Colors.White).Bold();
+                        });
+
+                        void FilaTabla(string concepto, decimal valor, bool destacar = false)
+                        {
+                            var bg = destacar ? Colors.Green.Lighten4 : Colors.White;
+                            table.Cell().Background(bg).BorderBottom(1)
+                                .BorderColor(Colors.Grey.Lighten2).Padding(6).Text(concepto);
+                            table.Cell().Background(bg).BorderBottom(1)
+                                .BorderColor(Colors.Grey.Lighten2).Padding(6)
+                                .Text($"${valor:N2}").AlignRight();
+                        }
+
+                        FilaTabla("Valor original", datos.ValorOriginal);
+                        FilaTabla("Descuento por devalúo mensual", datos.DescuentoMensual);
+                        FilaTabla("Descuento acumulado", datos.DescuentoAcumulado);
+                        FilaTabla("Valor actual del activo", datos.ValorActual, true);
+                    });
+
+                    // Nota
+                    col.Item().Text("Nota: El valor residual mínimo es del 10% del valor original (normativa ecuatoriana).")
+                        .FontSize(9).Italic().FontColor(Colors.Grey.Darken1);
+                });
+
+                // ---- FOOTER ----
+                page.Footer().AlignCenter().Text(text =>
+                {
+                    text.Span("Página ");
+                    text.CurrentPageNumber();
+                    text.Span(" de ");
+                    text.TotalPages();
+                });
+            });
+        });
+
+        return document.GeneratePdf();
+    }
+}
