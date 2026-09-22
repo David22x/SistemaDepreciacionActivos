@@ -1,4 +1,6 @@
 using System.Text;
+using DepreciationService.Application.Common.Interfaces;
+using DepreciationService.Application.UseCases.CalcularDepreciacion;
 using DepreciationService.Domain.Services;
 using DepreciationService.Infrastructure.Clients;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -19,6 +21,9 @@ builder.Services.AddHttpClient<AssetServiceClient>(client =>
     client.BaseAddress = new Uri(
         builder.Configuration["Services:AssetService:BaseUrl"]!);
 });
+builder.Services.AddScoped<IAssetServiceClient>(services =>
+    services.GetRequiredService<AssetServiceClient>());
+builder.Services.AddScoped<CalcularDepreciacionHandler>();
 
 // JWT Authentication (mismo esquema que AuthService)
 var jwtKey = builder.Configuration["Jwt:Key"]!;

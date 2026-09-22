@@ -1,13 +1,14 @@
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using ReportService.Application.Common.Interfaces;
 using ReportService.Domain.Models;
 
 namespace ReportService.Infrastructure.Services;
 
-public class PdfGeneratorService
+public class PdfGeneratorService : IPdfGenerator
 {
-    public byte[] GenerarReporte(ReporteDepreciacionDto datos)
+    public byte[] GenerarPdf(ReporteDepreciacionDto data)
     {
         var document = Document.Create(container =>
         {
@@ -49,10 +50,10 @@ public class PdfGeneratorService
                             table.Cell().Padding(5).Text(valor);
                         }
 
-                        Fila("Activo", datos.NombreActivo);
-                        Fila("Categoría", datos.Categoria);
-                        Fila("Fecha de consulta", datos.FechaConsulta.ToString("dd/MM/yyyy"));
-                        Fila("Meses transcurridos", datos.MesesTranscurridos.ToString());
+                        Fila("Activo", data.NombreActivo);
+                        Fila("Categoría", data.Categoria);
+                        Fila("Fecha de consulta", data.FechaConsulta.ToString("dd/MM/yyyy"));
+                        Fila("Meses transcurridos", data.MesesTranscurridos.ToString());
                     });
 
                     // Tabla de depreciación
@@ -84,10 +85,10 @@ public class PdfGeneratorService
                                 .Text($"${valor:N2}").AlignRight();
                         }
 
-                        FilaTabla("Valor original", datos.ValorOriginal);
-                        FilaTabla("Descuento por devalúo mensual", datos.DescuentoMensual);
-                        FilaTabla("Descuento acumulado", datos.DescuentoAcumulado);
-                        FilaTabla("Valor actual del activo", datos.ValorActual, true);
+                        FilaTabla("Valor original", data.ValorOriginal);
+                        FilaTabla("Descuento por devalúo mensual", data.DescuentoMensual);
+                        FilaTabla("Descuento acumulado", data.DescuentoAcumulado);
+                        FilaTabla("Valor actual del activo", data.ValorActual, true);
                     });
 
                     // Nota

@@ -1,5 +1,10 @@
 using System.Text;
+using AssetService.Application.Common.Interfaces;
+using AssetService.Application.UseCases.Activos.CrearActivo;
+using AssetService.Application.UseCases.Activos.ObtenerActivos;
+using AssetService.Application.UseCases.Categorias.ObtenerCategorias;
 using AssetService.Infrastructure.Data;
+using AssetService.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -13,6 +18,12 @@ builder.Services.AddSwaggerGen();
 // DbContext
 builder.Services.AddDbContext<AssetDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AssetDB")));
+
+builder.Services.AddScoped<IActivoRepository, ActivoRepository>();
+builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+builder.Services.AddScoped<CrearActivoHandler>();
+builder.Services.AddScoped<ObtenerActivosHandler>();
+builder.Services.AddScoped<ObtenerCategoriasHandler>();
 
 // CORS (útil cuando el frontend lo consuma)
 builder.Services.AddCors(options =>

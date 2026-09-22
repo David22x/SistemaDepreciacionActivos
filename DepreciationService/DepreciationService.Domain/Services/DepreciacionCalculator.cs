@@ -32,11 +32,15 @@ public class DepreciacionCalculator
         return new DepreciacionResponse
         {
             Activo = activo.Nombre,
+            CategoriaNombre = string.IsNullOrWhiteSpace(activo.CategoriaNombre)
+                ? "Sin categoría"
+                : activo.CategoriaNombre,
             ValorOriginal = activo.ValorOriginal,
             DescuentoPorDevaluo = Math.Round(depreciacionMensual, 2),
             DescuentoAcumulado = Math.Round(descuentoAcumulado, 2),
             ValorActual = Math.Round(valorActual, 2),
             MesesTranscurridos = mesesTranscurridos,
+            FechaAdquisicion = activo.FechaAdquisicion,
             FechaConsulta = fechaConsulta
         };
     }

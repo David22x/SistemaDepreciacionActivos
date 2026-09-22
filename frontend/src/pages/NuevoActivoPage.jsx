@@ -58,9 +58,12 @@ export default function NuevoActivoPage() {
           <label style={styles.label}>Categoría</label>
           <select style={styles.input} name="categoriaId" value={form.categoriaId} onChange={handleChange} required>
             <option value="">Selecciona una categoría</option>
-            {categorias.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.nombre} — {cat.vidaUtilAnios} años</option>
-            ))}
+            {categorias.map((cat) => {
+              const anios = cat.vidaUtilMeses ? Math.round(cat.vidaUtilMeses / 12) : 0;
+              return (
+                <option key={cat.id} value={cat.id}>{cat.nombre} — {anios} años</option>
+              );
+            })}
           </select>
 
           <div style={styles.actions}>

@@ -1,69 +1,96 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axiosClient from '../api/axiosClient';
-import { useAuth } from '../context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import AppLayout from '../components/AppLayout';
+import LoadingState from '../components/LoadingState';
+import { getActivos } from '../api/assetsApi';
+import { formatMoney, formatDate } from '../utils/format';
 
 export default function HomePage() {
   const [activos, setActivos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { logout } = useAuth();
+  const [busqueda, setBusqueda] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    axiosClient.get('/assets')
+    getActivos()
       .then(({ data }) => setActivos(data))
-      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const filtrados = activos.filter((a) =>
+    a.nombre.toLowerCase().includes(busqueda.toLowerCase()));
 
-  if (loading) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando activos...</p>;
+  const valorTotal = activos.reduce((s, a) => s + a.valorOriginal, 0);
+  const categorias = new Set(activos.map((a) => a.categoriaNombre)).size;
 
   return (
-    <div style={styles.container}>
-      <nav style={styles.navbar}>
-        <h1 style={styles.navTitle}>Depreciación de Activos</h1>
-        <div>
-          <button style={styles.navBtn} onClick={() => navigate('/activos/nuevo')}>
-            + Nuevo Activo
-          </button>
-          <button style={{ ...styles.navBtn, background: '#e74c3c' }} onClick={handleLogout}>
-            Cerrar sesión
-          </button>
+    <AppLayout
+      title="Panel de activos"
+      subtitle="Visualiza y consulta el valor depreciado de tus activos"
+    >
+      {/* KPIs */}
+      <section className="stats-grid">
+        <div className="stat-card">
+          <span className="stat-label">Activos registrados</span>
+          <span className="stat-value">{activos.length}</span>
         </div>
-      </nav>
+        <div className="stat-card">
+          <span className="stat-label">Categorías en uso</span>
+          <span className="stat-value">{categorias}</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-label">Valor original total</span>
+          <span className="stat-value">{formatMoney(valorTotal)}</span>
+        </div>
+      </section>
 
-      <main style={styles.main}>
-        <h2>Listado de Activos</h2>
+      {/* Búsqueda */}
+      <div className="toolbar">
+        <input
+          className="input"
+          placeholder="Buscar activo por nombre..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+        <Link to="/activos/nuevo" className="btn btn-primary">
+          + Nuevo activo
+        </Link>
+      </div>
 
-        {activos.length === 0 ? (
-          <p>No hay activos registrados. ¡Crea el primero!</p>
-        ) : (
-          <table style={styles.table}>
+      {/* Tabla */}
+      {loading ? (
+        <LoadingState texto="Cargando activos..." />
+      ) : filtrados.length === 0 ? (
+        <div className="empty-state">
+          <h3>No hay activos</h3>
+          <p>Registra tu primer activo para empezar a calcular depreciación.</p>
+          <Link to="/activos/nuevo" className="btn btn-primary">
+            Registrar activo
+          </Link>
+        </div>
+      ) : (
+        <div className="card-padded table-wrap">
+          <table className="data-table">
             <thead>
               <tr>
-                <th style={styles.th}>Nombre</th>
-                <th style={styles.th}>Categoría</th>
-                <th style={styles.th}>Valor Original</th>
-                <th style={styles.th}>Fecha Adquisición</th>
-                <th style={styles.th}>Acciones</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Valor original</th>
+                <th>Adquisición</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {activos.map((activo) => (
-                <tr key={activo.id}>
-                  <td style={styles.td}>{activo.nombre}</td>
-                  <td style={styles.td}>{activo.categoriaNombre}</td>
-                  <td style={styles.td}>${activo.valorOriginal?.toLocaleString()}</td>
-                  <td style={styles.td}>{new Date(activo.fechaAdquisicion).toLocaleDateString()}</td>
-                  <td style={styles.td}>
+              {filtrados.map((a) => (
+                <tr key={a.id}>
+                  <td>{a.nombre}</td>
+                  <td><span className="badge">{a.categoriaNombre}</span></td>
+                  <td>{formatMoney(a.valorOriginal)}</td>
+                  <td>{formatDate(a.fechaAdquisicion)}</td>
+                  <td className="row-actions">
                     <button
-                      style={styles.actionBtn}
-                      onClick={() => navigate(`/consulta/${activo.id}`)}
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => navigate(`/consulta/${a.id}`)}
                     >
                       Consultar valor
                     </button>
@@ -72,20 +99,8 @@ export default function HomePage() {
               ))}
             </tbody>
           </table>
-        )}
-      </main>
-    </div>
+        </div>
+      )}
+    </AppLayout>
   );
 }
-
-const styles = {
-  container: { minHeight: '100vh', background: '#f0f2f5' },
-  navbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: '#1a1a2e', color: '#fff' },
-  navTitle: { margin: 0, fontSize: '1.2rem' },
-  navBtn: { marginLeft: '1rem', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: '#3498db', color: '#fff', cursor: 'pointer' },
-  main: { padding: '2rem' },
-  table: { width: '100%', borderCollapse: 'collapse', background: '#fff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
-  th: { padding: '0.75rem 1rem', background: '#1a1a2e', color: '#fff', textAlign: 'left' },
-  td: { padding: '0.75rem 1rem', borderBottom: '1px solid #eee' },
-  actionBtn: { padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', background: '#27ae60', color: '#fff', cursor: 'pointer' },
-};

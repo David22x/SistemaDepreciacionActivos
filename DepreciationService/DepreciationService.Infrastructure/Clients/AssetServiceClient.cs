@@ -1,33 +1,22 @@
-using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using DepreciationService.Application.Common.Interfaces;
 using DepreciationService.Domain.Models;
 
 namespace DepreciationService.Infrastructure.Clients;
 
-public class AssetServiceClient
+public class AssetServiceClient : IAssetServiceClient
 {
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _http;
+    public AssetServiceClient(HttpClient http) => _http = http;
 
-    public AssetServiceClient(HttpClient httpClient)
+    public async Task<ActivoDto?> ObtenerActivoAsync(int activoId, string bearerToken)
     {
-        _httpClient = httpClient;
-    }
+        _http.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", bearerToken);
 
-    public async Task<ActivoDto?> ObtenerActivoAsync(int activoId, string? bearerToken)
-    {
-        if (!string.IsNullOrWhiteSpace(bearerToken))
-        {
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", bearerToken);
-        }
-
-        var response = await _httpClient.GetAsync($"api/Activos/{activoId}");
-
-        if (response.StatusCode == HttpStatusCode.NotFound)
-            return null;
-
-        response.EnsureSuccessStatusCode();
+        var response = await _http.GetAsync($"api/activos/{activoId}");
+        if (!response.IsSuccessStatusCode) return null;
 
         return await response.Content.ReadFromJsonAsync<ActivoDto>();
     }

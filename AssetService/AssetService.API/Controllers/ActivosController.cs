@@ -1,9 +1,10 @@
 using AssetService.API.DTOs;
+using AssetService.Application.Common.Interfaces;
+using AssetService.Application.UseCases.Activos.CrearActivo;
+using AssetService.Application.UseCases.Activos.ObtenerActivos;
 using AssetService.Domain.Entities;
-using AssetService.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AssetService.API.Controllers;
 
@@ -12,29 +13,37 @@ namespace AssetService.API.Controllers;
 [Authorize]
 public class ActivosController : ControllerBase
 {
-    private readonly AssetDbContext _context;
+    private readonly IActivoRepository _activos;
+    private readonly ICategoriaRepository _categorias;
+    private readonly CrearActivoHandler _crear;
+    private readonly ObtenerActivosHandler _obtenerTodos;
 
-    public ActivosController(AssetDbContext context) => _context = context;
+    public ActivosController(
+        IActivoRepository activos,
+        ICategoriaRepository categorias,
+        CrearActivoHandler crear,
+        ObtenerActivosHandler obtenerTodos)
+    {
+        _activos = activos;
+        _categorias = categorias;
+        _crear = crear;
+        _obtenerTodos = obtenerTodos;
+    }
 
     // GET: api/activos
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ActivoResponse>>> GetActivos()
     {
-        var activos = await _context.Activos
-            .Include(a => a.Categoria)
-            .Select(a => MapToResponse(a))
-            .ToListAsync();
+        var activos = await _obtenerTodos.HandleAsync();
 
-        return Ok(activos);
+        return Ok(activos.Select(MapToResponse));
     }
 
     // GET: api/activos/5
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ActivoResponse>> GetActivo(int id)
     {
-        var activo = await _context.Activos
-            .Include(a => a.Categoria)
-            .FirstOrDefaultAsync(a => a.Id == id);
+        var activo = await _activos.ObtenerPorIdAsync(id);
 
         if (activo is null) return NotFound(new { mensaje = "Activo no encontrado" });
 
@@ -45,44 +54,34 @@ public class ActivosController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ActivoResponse>> CrearActivo([FromBody] ActivoCreateRequest request)
     {
-        if (request.ValorOriginal <= 0)
-            return BadRequest(new { mensaje = "El valor original debe ser mayor a 0" });
-
-        var categoriaExiste = await _context.Categorias
-            .AnyAsync(c => c.Id == request.CategoriaId);
-
-        if (!categoriaExiste)
-            return BadRequest(new { mensaje = "La categoría no existe" });
-
-        var activo = new Activo
+        try
         {
-            Nombre = request.Nombre,
-            ValorOriginal = request.ValorOriginal,
-            FechaAdquisicion = request.FechaAdquisicion,
-            CategoriaId = request.CategoriaId
-        };
+            var activo = await _crear.HandleAsync(new CrearActivoCommand(
+                request.Nombre, request.ValorOriginal,
+                request.FechaAdquisicion, request.CategoriaId));
 
-        _context.Activos.Add(activo);
-        await _context.SaveChangesAsync();
+            activo = await _activos.ObtenerPorIdAsync(activo.Id) ?? activo;
 
-        await _context.Entry(activo).Reference(a => a.Categoria).LoadAsync();
-
-        return CreatedAtAction(nameof(GetActivo), new { id = activo.Id }, MapToResponse(activo));
+            return CreatedAtAction(nameof(GetActivo), new { id = activo.Id }, MapToResponse(activo));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
     }
 
     // PUT: api/activos/5
     [HttpPut("{id:int}")]
     public async Task<IActionResult> EditarActivo(int id, [FromBody] ActivoUpdateRequest request)
     {
-        var activo = await _context.Activos.FindAsync(id);
+        var activo = await _activos.ObtenerPorIdAsync(id);
         if (activo is null) return NotFound(new { mensaje = "Activo no encontrado" });
 
         if (request.ValorOriginal <= 0)
             return BadRequest(new { mensaje = "El valor original debe ser mayor a 0" });
 
-        var categoriaExiste = await _context.Categorias
-            .AnyAsync(c => c.Id == request.CategoriaId);
-        if (!categoriaExiste)
+        var categoria = await _categorias.ObtenerPorIdAsync(request.CategoriaId);
+        if (categoria is null)
             return BadRequest(new { mensaje = "La categoría no existe" });
 
         activo.Nombre = request.Nombre;
@@ -90,7 +89,7 @@ public class ActivosController : ControllerBase
         activo.FechaAdquisicion = request.FechaAdquisicion;
         activo.CategoriaId = request.CategoriaId;
 
-        await _context.SaveChangesAsync();
+        await _activos.ActualizarAsync(activo);
         return NoContent();
     }
 
@@ -98,11 +97,10 @@ public class ActivosController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> EliminarActivo(int id)
     {
-        var activo = await _context.Activos.FindAsync(id);
-        if (activo is null) return NotFound(new { mensaje = "Activo no encontrado" });
+        if (!await _activos.ExisteAsync(id))
+            return NotFound(new { mensaje = "Activo no encontrado" });
 
-        _context.Activos.Remove(activo);
-        await _context.SaveChangesAsync();
+        await _activos.EliminarAsync(id);
         return NoContent();
     }
 
@@ -111,3 +109,4 @@ public class ActivosController : ControllerBase
         new(a.Id, a.Nombre, a.ValorOriginal, a.FechaAdquisicion,
             a.CategoriaId, a.Categoria?.Nombre ?? "", a.Categoria?.VidaUtilMeses ?? 0);
 }
+

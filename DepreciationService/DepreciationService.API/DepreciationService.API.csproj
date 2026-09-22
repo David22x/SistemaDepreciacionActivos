@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DepreciationService.Infrastructure\DepreciationService.Infrastructure.csproj" />
     <ProjectReference Include="..\DepreciationService.Domain\DepreciationService.Domain.csproj" />
+    <ProjectReference Include="..\DepreciationService.Application\DepreciationService.Application.csproj" />
   </ItemGroup>
 
 </Project>

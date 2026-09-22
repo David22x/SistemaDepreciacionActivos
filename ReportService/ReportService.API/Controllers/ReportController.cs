@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ReportService.Application.UseCases.GenerarReporteDepreciacion;
 using ReportService.Domain.Models;
-using ReportService.Infrastructure.Services;
 
 namespace ReportService.API.Controllers;
 
@@ -10,16 +10,39 @@ namespace ReportService.API.Controllers;
 [Authorize]
 public class ReportController : ControllerBase
 {
-    private readonly PdfGeneratorService _pdfService;
+    private readonly GenerarReporteDepreciacionHandler _handler;
 
-    public ReportController(PdfGeneratorService pdfService)
-        => _pdfService = pdfService;
+    public ReportController(GenerarReporteDepreciacionHandler handler)
+        => _handler = handler;
 
     [HttpPost("depreciacion/pdf")]
     public IActionResult GenerarPdfDepreciacion([FromBody] ReporteDepreciacionDto datos)
     {
-        var pdfBytes = _pdfService.GenerarReporte(datos);
+        if (datos is null)
+            return BadRequest(new { mensaje = "No se recibieron datos para generar el PDF." });
+
+        var nombreActivo = string.IsNullOrWhiteSpace(datos.NombreActivo)
+            ? "Activo sin nombre"
+            : datos.NombreActivo;
+
+        var categoria = string.IsNullOrWhiteSpace(datos.Categoria)
+            ? "Sin categoría"
+            : datos.Categoria;
+
+        var dto = new ReporteDepreciacionDto
+        {
+            NombreActivo = nombreActivo,
+            Categoria = categoria,
+            ValorOriginal = datos.ValorOriginal,
+            DescuentoMensual = datos.DescuentoMensual,
+            DescuentoAcumulado = datos.DescuentoAcumulado,
+            ValorActual = datos.ValorActual,
+            FechaConsulta = datos.FechaConsulta,
+            MesesTranscurridos = datos.MesesTranscurridos
+        };
+
+        var pdfBytes = _handler.Handle(dto);
         return File(pdfBytes, "application/pdf",
-            $"depreciacion-{datos.NombreActivo.Replace(" ", "_")}.pdf");
+            $"depreciacion-{nombreActivo.Replace(" ", "_")}.pdf");
     }
 }

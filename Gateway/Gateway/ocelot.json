@@ -10,18 +10,36 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/assets/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
-      "DownstreamPathTemplate": "/api/Activos/{everything}",
+      "UpstreamPathTemplate": "/assets/categorias",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/Categorias",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         { "Host": "localhost", "Port": 5271 }
       ]
     },
     {
-      "UpstreamPathTemplate": "/depreciation/{everything}",
+      "UpstreamPathTemplate": "/assets",
       "UpstreamHttpMethod": [ "GET", "POST" ],
-      "DownstreamPathTemplate": "/api/Depreciation/{everything}",
+      "DownstreamPathTemplate": "/api/Activos",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5271 }
+      ]
+    },
+    {
+      "UpstreamPathTemplate": "/assets/{id}",
+      "UpstreamHttpMethod": [ "GET", "PUT", "DELETE" ],
+      "DownstreamPathTemplate": "/api/Activos/{id}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5271 }
+      ]
+    },
+    {
+      "UpstreamPathTemplate": "/depreciation/calcular",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/api/Depreciation/calcular",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         { "Host": "localhost", "Port": 5297 }

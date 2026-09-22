@@ -1,17 +1,19 @@
 <Solution>
   <Folder Name="/AssetService/">
     <Project Path="AssetService/AssetService.API/AssetService.API.csproj" />
+    <Project Path="AssetService/AssetService.Application/AssetService.Application.csproj" />
     <Project Path="AssetService/AssetService.Domain/AssetService.Domain.csproj" />
     <Project Path="AssetService/AssetService.Infrastructure/AssetService.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/AuthService/">
     <Project Path="AuthService/AuthService.API/AuthService.API.csproj" />
+    <Project Path="AuthService/AuthService.Application/AuthService.Application.csproj" />
     <Project Path="AuthService/AuthService.Domain/AuthService.Domain.csproj" />
-    <Project Path="AuthService/AuthService.Infraestructure/AuthService.Infraestructure.csproj" />
     <Project Path="AuthService/AuthService.Infrastructure/AuthService.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/DepreciationService/">
     <Project Path="DepreciationService/DepreciationService.API/DepreciationService.API.csproj" />
+    <Project Path="DepreciationService/DepreciationService.Application/DepreciationService.Application.csproj" />
     <Project Path="DepreciationService/DepreciationService.Domain/DepreciationService.Domain.csproj" />
     <Project Path="DepreciationService/DepreciationService.Infrastructure/DepreciationService.Infrastructure.csproj" />
   </Folder>
@@ -20,6 +22,7 @@
   </Folder>
   <Folder Name="/ReportService/">
     <Project Path="ReportService/ReportService.API/ReportService.API.csproj" />
+    <Project Path="ReportService/ReportService.Application/ReportService.Application.csproj" />
     <Project Path="ReportService/ReportService.Domain/ReportService.Domain.csproj" />
     <Project Path="ReportService/ReportService.Infrastructure/ReportService.Infrastructure.csproj" />
   </Folder>

@@ -1,19 +1,13 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState } from 'react';
 import axiosClient from '../api/axiosClient';
 
-const AuthContext = createContext(null);
+import { AuthContext } from './AuthContextValue';
 
 export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
+  const [usuario, setUsuario] = useState(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      setUsuario({ token });
-    }
-    setLoading(false);
-  }, []);
+    return token ? { token } : null;
+  });
 
   const login = async (nombreUsuario, password) => {
     const { data } = await axiosClient.post('/auth/login', {
@@ -30,10 +24,8 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ usuario, login, logout, loading }}>
+    <AuthContext.Provider value={{ usuario, login, logout, loading: false }}>
       {children}
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => useContext(AuthContext);

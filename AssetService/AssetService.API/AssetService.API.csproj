@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AssetService.Infrastructure\AssetService.Infrastructure.csproj" />
     <ProjectReference Include="..\AssetService.Domain\AssetService.Domain.csproj" />
+    <ProjectReference Include="..\AssetService.Application\AssetService.Application.csproj" />
   </ItemGroup>
 
 </Project>

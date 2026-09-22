@@ -1,6 +1,10 @@
 using System.Text;
+using AuthService.Application.Common.Interfaces;
+using AuthService.Application.UseCases.IniciarSesion;
+using AuthService.Application.UseCases.RegistrarUsuario;
 using AuthService.Infrastructure.Data;
-using AuthService.Infrastructure.Services;
+using AuthService.Infrastructure.Repositories;
+using AuthService.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,9 +19,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AuthDB")));
 
-// Servicios de autenticación
-builder.Services.AddScoped<JwtService>();
-builder.Services.AddScoped<AuthService.Infrastructure.Services.AuthService>();
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IniciarSesionHandler>();
+builder.Services.AddScoped<RegistrarUsuarioHandler>();
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;

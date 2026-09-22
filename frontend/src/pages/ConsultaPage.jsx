@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
+import { formatMoney, formatDate } from '../utils/format';
 
 export default function ConsultaPage() {
   const { id } = useParams();
@@ -14,12 +15,24 @@ export default function ConsultaPage() {
     setLoading(true);
     setError('');
     try {
-      const { data } = await axiosClient.get(
-        `/depreciation/activo/${id}?fecha=${fecha}`
-      );
-      setResultado(data);
+      const { data } = await axiosClient.post('/depreciation/calcular', {
+        activoId: Number(id),
+        fechaConsulta: fecha,
+      });
+
+      setResultado({
+        nombreActivo: data.activo,
+        categoriaNombre: data.categoriaNombre ?? 'Sin categoría',
+        valorOriginal: data.valorOriginal,
+        descuentoMensual: data.descuentoPorDevaluo,
+        descuentoAcumulado: data.descuentoAcumulado,
+        valorActual: data.valorActual,
+        fechaConsulta: data.fechaConsulta,
+        fechaAdquisicion: data.fechaAdquisicion,
+        mesesTranscurridos: data.mesesTranscurridos,
+      });
     } catch (err) {
-      setError('Error al consultar la depreciación');
+      setError(err.response?.data?.mensaje || 'Error al consultar la depreciación');
     } finally {
       setLoading(false);
     }
@@ -51,7 +64,7 @@ export default function ConsultaPage() {
       link.click();
       link.remove();
     } catch (err) {
-      setError('Error al generar el PDF');
+      setError(err.response?.data?.mensaje || 'Error al generar el PDF');
     }
   };
 
@@ -67,13 +80,15 @@ export default function ConsultaPage() {
         <h2 style={styles.title}>Consulta de Valor Depreciado</h2>
 
         <div style={styles.controls}>
-          <label style={styles.label}>Fecha de consulta:</label>
-          <input
-            style={styles.input}
-            type="date"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-          />
+          <div style={styles.inlineField}>
+            <label style={styles.label}>Fecha de consulta:</label>
+            <input
+              style={styles.input}
+              type="date"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+            />
+          </div>
           <button style={styles.consultarBtn} onClick={consultar} disabled={loading}>
             {loading ? 'Consultando...' : 'Consultar'}
           </button>
@@ -83,6 +98,32 @@ export default function ConsultaPage() {
 
         {resultado && (
           <>
+          <div className="consulta-hero">
+  <div>
+    <p className="consulta-hero-label">Valor actual del activo</p>
+    <p className="consulta-hero-value">{formatMoney(resultado.valorActual)}</p>
+    <p className="consulta-hero-sub">
+      {resultado.nombreActivo} · {resultado.categoriaNombre}
+    </p>
+  </div>
+</div>
+
+<section className="stats-grid">
+  <div className="stat-card">
+    <span className="stat-label">Fecha de adquisición</span>
+    <span className="stat-value">{formatDate(resultado.fechaAdquisicion)}</span>
+  </div>
+  <div className="stat-card">
+    <span className="stat-label">Valor original</span>
+    <span className="stat-value">{formatMoney(resultado.valorOriginal)}</span>
+  </div>
+  <div className="stat-card">
+    <span className="stat-label">Descuento acumulado</span>
+    <span className="stat-value">
+      {formatMoney(resultado.descuentoAcumulado)}
+    </span>
+  </div>
+</section>
             <table style={styles.table}>
               <thead>
                 <tr>
@@ -98,6 +139,10 @@ export default function ConsultaPage() {
                 <tr>
                   <td style={styles.td}>Categoría</td>
                   <td style={styles.td}>{resultado.categoriaNombre}</td>
+                </tr>
+                <tr>
+                  <td style={styles.td}>Fecha de adquisición</td>
+                  <td style={styles.td}>{resultado.fechaAdquisicion ? new Date(resultado.fechaAdquisicion).toLocaleDateString() : 'No disponible'}</td>
                 </tr>
                 <tr>
                   <td style={styles.td}>Valor original</td>
@@ -138,7 +183,8 @@ const styles = {
   card: { background: '#fff', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '600px' },
   backBtn: { marginBottom: '1rem', padding: '0.4rem 0.8rem', border: 'none', background: 'transparent', color: '#3498db', cursor: 'pointer', fontSize: '1rem' },
   title: { marginTop: 0, color: '#1a1a2e' },
-  controls: { display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' },
+  controls: { display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' },
+  inlineField: { display: 'flex', flexDirection: 'column', gap: '0.35rem' },
   label: { fontWeight: 'bold', fontSize: '0.9rem' },
   input: { padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd' },
   consultarBtn: { padding: '0.5rem 1.2rem', borderRadius: '8px', border: 'none', background: '#3498db', color: '#fff', cursor: 'pointer' },

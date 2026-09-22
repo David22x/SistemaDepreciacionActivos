@@ -1,3 +1,5 @@
+using ReportService.Application.Common.Interfaces;
+using ReportService.Application.UseCases.GenerarReporteDepreciacion;
 using QuestPDF.Infrastructure;
 using ReportService.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,7 +11,8 @@ QuestPDF.Settings.License = LicenseType.Community;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddScoped<PdfGeneratorService>();
+builder.Services.AddScoped<IPdfGenerator, PdfGeneratorService>();
+builder.Services.AddScoped<GenerarReporteDepreciacionHandler>();
 
 // JWT (igual que en AuthService)
 var jwtKey = builder.Configuration["Jwt:Key"]!;

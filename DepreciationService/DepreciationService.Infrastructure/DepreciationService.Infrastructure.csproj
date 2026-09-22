@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DepreciationService.Domain\DepreciationService.Domain.csproj" />
+    <ProjectReference Include="..\DepreciationService.Application\DepreciationService.Application.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
