@@ -4,4 +4,5 @@ public record CrearActivoCommand(
     string Nombre,
     decimal ValorOriginal,
     DateTime FechaAdquisicion,
-    int CategoriaId);
+    int CategoriaId,
+    int UsuarioId);

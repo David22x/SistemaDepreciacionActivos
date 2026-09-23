@@ -41,6 +41,9 @@ namespace AssetService.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("ValorOriginal")
                         .HasColumnType("decimal(18,2)");
 
@@ -48,7 +51,9 @@ namespace AssetService.Infrastructure.Migrations
 
                     b.HasIndex("CategoriaId");
 
-                    b.ToTable("Activos");
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Activos", (string)null);
                 });
 
             modelBuilder.Entity("AssetService.Domain.Entities.Categoria", b =>
@@ -69,7 +74,7 @@ namespace AssetService.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categorias");
+                    b.ToTable("Categorias", (string)null);
 
                     b.HasData(
                         new

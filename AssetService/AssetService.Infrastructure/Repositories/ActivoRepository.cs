@@ -10,12 +10,14 @@ public class ActivoRepository : IActivoRepository
     private readonly AssetDbContext _context;
     public ActivoRepository(AssetDbContext context) => _context = context;
 
-    public Task<List<Activo>> ObtenerTodosAsync() =>
-        _context.Activos.Include(a => a.Categoria).ToListAsync();
-
-    public Task<Activo?> ObtenerPorIdAsync(int id) =>
+    public Task<List<Activo>> ObtenerPorUsuarioAsync(int usuarioId) =>
         _context.Activos.Include(a => a.Categoria)
-                       .FirstOrDefaultAsync(a => a.Id == id);
+                       .Where(a => a.UsuarioId == usuarioId)
+                       .ToListAsync();
+
+    public Task<Activo?> ObtenerPorIdAsync(int id, int usuarioId) =>
+        _context.Activos.Include(a => a.Categoria)
+                       .FirstOrDefaultAsync(a => a.Id == id && a.UsuarioId == usuarioId);
 
     public async Task<Activo> CrearAsync(Activo activo)
     {
@@ -38,6 +40,6 @@ public class ActivoRepository : IActivoRepository
         await _context.SaveChangesAsync();
     }
 
-    public Task<bool> ExisteAsync(int id) =>
-        _context.Activos.AnyAsync(a => a.Id == id);
+    public Task<bool> ExisteAsync(int id, int usuarioId) =>
+        _context.Activos.AnyAsync(a => a.Id == id && a.UsuarioId == usuarioId);
 }

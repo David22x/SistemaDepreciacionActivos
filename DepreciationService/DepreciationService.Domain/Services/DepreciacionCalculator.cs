@@ -8,58 +8,85 @@ public class DepreciacionCalculator
 
     public DepreciacionResponse Calcular(ActivoDto activo, DateTime fechaConsulta)
     {
-        // 1. Valor residual = 10% del valor original
         var valorResidual = activo.ValorOriginal * ValorResidualPorcentaje;
 
-        // 2. Depreciación mensual = (valor original − valor residual) / vida útil
         var depreciacionMensual = activo.VidaUtilMeses > 0
             ? (activo.ValorOriginal - valorResidual) / activo.VidaUtilMeses
             : 0m;
 
-        // 3. Meses transcurridos desde la adquisición
-        var mesesTranscurridos = CalcularMesesTranscurridos(
-            activo.FechaAdquisicion, fechaConsulta);
+        var mesesTranscurridosTotal = CalcularMesesTranscurridos(activo.FechaAdquisicion, fechaConsulta);
+        var mesesEfectivosTotal = Math.Min(mesesTranscurridosTotal, activo.VidaUtilMeses);
+        var descuentoAcumuladoTotal = depreciacionMensual * mesesEfectivosTotal;
 
-        // 4. Descuento acumulado (no puede exceder la vida útil)
-        var mesesEfectivos = Math.Min(mesesTranscurridos, activo.VidaUtilMeses);
-        var descuentoAcumulado = depreciacionMensual * mesesEfectivos;
-
-        // 5. Valor actual con piso del 10%
-        var valorActual = activo.ValorOriginal - descuentoAcumulado;
-        if (valorActual < valorResidual)
-            valorActual = valorResidual;
+        var valorActualTotal = activo.ValorOriginal - descuentoAcumuladoTotal;
+        if (valorActualTotal < valorResidual) valorActualTotal = valorResidual;
 
         return new DepreciacionResponse
         {
             Activo = activo.Nombre,
-            CategoriaNombre = string.IsNullOrWhiteSpace(activo.CategoriaNombre)
-                ? "Sin categoría"
-                : activo.CategoriaNombre,
+            CategoriaNombre = string.IsNullOrWhiteSpace(activo.CategoriaNombre) ? "Sin categoría" : activo.CategoriaNombre,
             ValorOriginal = activo.ValorOriginal,
             DescuentoPorDevaluo = Math.Round(depreciacionMensual, 2),
-            DescuentoAcumulado = Math.Round(descuentoAcumulado, 2),
-            ValorActual = Math.Round(valorActual, 2),
-            MesesTranscurridos = mesesTranscurridos,
+            DescuentoAcumulado = Math.Round(descuentoAcumuladoTotal, 2),
+            ValorActual = Math.Round(valorActualTotal, 2),
+            MesesTranscurridos = mesesTranscurridosTotal,
             FechaAdquisicion = activo.FechaAdquisicion,
-            FechaConsulta = fechaConsulta
+            FechaConsulta = fechaConsulta,
+            DesglosePorAnio = ConstruirDesglosePorAnio(activo, fechaConsulta, depreciacionMensual, valorResidual)
         };
     }
 
-    /// <summary>
-    /// Calcula meses completos transcurridos entre dos fechas.
-    /// Si la fecha de consulta es anterior a la adquisición, retorna 0.
-    /// </summary>
+    private static List<DepreciacionAnualDto> ConstruirDesglosePorAnio(
+        ActivoDto activo, DateTime fechaConsulta, decimal depreciacionMensual, decimal valorResidual)
+    {
+        var desglose = new List<DepreciacionAnualDto>();
+
+        if (fechaConsulta < activo.FechaAdquisicion)
+        {
+            desglose.Add(new DepreciacionAnualDto
+            {
+                Anio = activo.FechaAdquisicion.Year,
+                ValorInicioAnio = activo.ValorOriginal,
+                DescuentoDelAnio = 0m,
+                DescuentoAcumulado = 0m,
+                ValorFinAnio = activo.ValorOriginal
+            });
+            return desglose;
+        }
+
+        var valorInicioAnio = activo.ValorOriginal;
+
+        for (var anio = activo.FechaAdquisicion.Year; anio <= fechaConsulta.Year; anio++)
+        {
+            var esUltimoAnio = anio == fechaConsulta.Year;
+            var fechaReferencia = esUltimoAnio ? fechaConsulta : new DateTime(anio, 12, 31);
+
+            var meses = Math.Min(CalcularMesesTranscurridos(activo.FechaAdquisicion, fechaReferencia), activo.VidaUtilMeses);
+            var descuentoAcumulado = depreciacionMensual * meses;
+
+            var valorFinAnio = activo.ValorOriginal - descuentoAcumulado;
+            if (valorFinAnio < valorResidual) valorFinAnio = valorResidual;
+
+            desglose.Add(new DepreciacionAnualDto
+            {
+                Anio = anio,
+                ValorInicioAnio = Math.Round(valorInicioAnio, 2),
+                DescuentoDelAnio = Math.Round(valorInicioAnio - valorFinAnio, 2),
+                DescuentoAcumulado = Math.Round(descuentoAcumulado, 2),
+                ValorFinAnio = Math.Round(valorFinAnio, 2)
+            });
+
+            valorInicioAnio = valorFinAnio;
+        }
+
+        return desglose;
+    }
+
     private static int CalcularMesesTranscurridos(DateTime adquisicion, DateTime consulta)
     {
         if (consulta < adquisicion) return 0;
-
-        var meses = (consulta.Year - adquisicion.Year) * 12
-                    + (consulta.Month - adquisicion.Month);
-
-        // Ajuste por día: si el día de consulta es menor al día de adquisición,
-        // aún no se completa el mes en curso.
+        var meses = (consulta.Year - adquisicion.Year) * 12 + (consulta.Month - adquisicion.Month);
         if (consulta.Day < adquisicion.Day) meses--;
-
         return Math.Max(0, meses);
     }
 }

@@ -38,7 +38,8 @@ public class ReportController : ControllerBase
             DescuentoAcumulado = datos.DescuentoAcumulado,
             ValorActual = datos.ValorActual,
             FechaConsulta = datos.FechaConsulta,
-            MesesTranscurridos = datos.MesesTranscurridos
+            MesesTranscurridos = datos.MesesTranscurridos,
+            DesglosePorAnio = datos.DesglosePorAnio ?? new()
         };
 
         var pdfBytes = _handler.Handle(dto);

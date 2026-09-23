@@ -5,6 +5,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Cargar ocelot.json
 builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile(
+    $"ocelot.{builder.Environment.EnvironmentName}.json",
+    optional: true,
+    reloadOnChange: true);
 
 // Registrar Ocelot
 builder.Services.AddOcelot(builder.Configuration);

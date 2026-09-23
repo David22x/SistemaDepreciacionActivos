@@ -10,4 +10,14 @@ public class ReporteDepreciacionDto
     public decimal ValorActual { get; set; }
     public DateTime FechaConsulta { get; set; }
     public int MesesTranscurridos { get; set; }
+    public List<DepreciacionAnualDto> DesglosePorAnio { get; set; } = new();
+}
+
+public class DepreciacionAnualDto
+{
+    public int Anio { get; set; }
+    public decimal ValorInicioAnio { get; set; }
+    public decimal DescuentoDelAnio { get; set; }
+    public decimal DescuentoAcumulado { get; set; }
+    public decimal ValorFinAnio { get; set; }
 }

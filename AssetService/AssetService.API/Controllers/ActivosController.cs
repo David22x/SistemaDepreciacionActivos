@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AssetService.API.DTOs;
 using AssetService.Application.Common.Interfaces;
 using AssetService.Application.UseCases.Activos.CrearActivo;
@@ -30,37 +31,39 @@ public class ActivosController : ControllerBase
         _obtenerTodos = obtenerTodos;
     }
 
-    // GET: api/activos
+    // Extrae el id del usuario autenticado desde el claim "sub" del JWT
+    private int UsuarioIdActual()
+    {
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
+        return int.Parse(claim!.Value);
+    }
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ActivoResponse>>> GetActivos()
     {
-        var activos = await _obtenerTodos.HandleAsync();
-
+        var activos = await _obtenerTodos.HandleAsync(UsuarioIdActual());
         return Ok(activos.Select(MapToResponse));
     }
 
-    // GET: api/activos/5
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ActivoResponse>> GetActivo(int id)
     {
-        var activo = await _activos.ObtenerPorIdAsync(id);
-
+        var activo = await _activos.ObtenerPorIdAsync(id, UsuarioIdActual());
         if (activo is null) return NotFound(new { mensaje = "Activo no encontrado" });
-
         return Ok(MapToResponse(activo));
     }
 
-    // POST: api/activos
     [HttpPost]
     public async Task<ActionResult<ActivoResponse>> CrearActivo([FromBody] ActivoCreateRequest request)
     {
         try
         {
+            var usuarioId = UsuarioIdActual();
             var activo = await _crear.HandleAsync(new CrearActivoCommand(
                 request.Nombre, request.ValorOriginal,
-                request.FechaAdquisicion, request.CategoriaId));
+                request.FechaAdquisicion, request.CategoriaId, usuarioId));
 
-            activo = await _activos.ObtenerPorIdAsync(activo.Id) ?? activo;
+            activo = await _activos.ObtenerPorIdAsync(activo.Id, usuarioId) ?? activo;
 
             return CreatedAtAction(nameof(GetActivo), new { id = activo.Id }, MapToResponse(activo));
         }
@@ -70,11 +73,11 @@ public class ActivosController : ControllerBase
         }
     }
 
-    // PUT: api/activos/5
     [HttpPut("{id:int}")]
     public async Task<IActionResult> EditarActivo(int id, [FromBody] ActivoUpdateRequest request)
     {
-        var activo = await _activos.ObtenerPorIdAsync(id);
+        var usuarioId = UsuarioIdActual();
+        var activo = await _activos.ObtenerPorIdAsync(id, usuarioId);
         if (activo is null) return NotFound(new { mensaje = "Activo no encontrado" });
 
         if (request.ValorOriginal <= 0)
@@ -93,20 +96,18 @@ public class ActivosController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/activos/5
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> EliminarActivo(int id)
     {
-        if (!await _activos.ExisteAsync(id))
+        var usuarioId = UsuarioIdActual();
+        if (!await _activos.ExisteAsync(id, usuarioId))
             return NotFound(new { mensaje = "Activo no encontrado" });
 
         await _activos.EliminarAsync(id);
         return NoContent();
     }
 
-    // Helper de mapeo
     private static ActivoResponse MapToResponse(Activo a) =>
         new(a.Id, a.Nombre, a.ValorOriginal, a.FechaAdquisicion,
             a.CategoriaId, a.Categoria?.Nombre ?? "", a.Categoria?.VidaUtilMeses ?? 0);
 }
-

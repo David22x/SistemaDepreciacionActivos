@@ -1,0 +1,142 @@
+services:
+  # ==========================================
+  # BASE DE DATOS
+  # ==========================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Your_password123
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    networks:
+      - depreciacion-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P Your_password123 -Q 'SELECT 1' -C || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # MICROSERVICIOS
+  # ==========================================
+  auth-service:
+    build:
+      context: ./AuthService
+      dockerfile: Dockerfile
+    container_name: auth-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__AuthDB=Server=sqlserver;Database=AuthDB;User Id=sa;Password=Your_password123;TrustServerCertificate=True;
+      - Jwt__Key=UnaClaveSuperSecretaDeAlMenos32Caracteres!
+      - Jwt__Issuer=AuthService
+      - Jwt__Audience=DepreciacionApp
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - depreciacion-network
+
+  asset-service:
+    build:
+      context: ./AssetService
+      dockerfile: Dockerfile
+    container_name: asset-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__AssetDB=Server=sqlserver;Database=AssetDB;User Id=sa;Password=Your_password123;TrustServerCertificate=True;
+      - Jwt__Key=UnaClaveSuperSecretaDeAlMenos32Caracteres!
+      - Jwt__Issuer=AuthService
+      - Jwt__Audience=DepreciacionApp
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - depreciacion-network
+
+  depreciation-service:
+    build:
+      context: ./DepreciationService
+      dockerfile: Dockerfile
+    container_name: depreciation-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DepreciationDB=Server=sqlserver;Database=DepreciationDB;User Id=sa;Password=Your_password123;TrustServerCertificate=True;
+      - Services__AssetService__BaseUrl=http://asset-service:80
+      - Jwt__Key=UnaClaveSuperSecretaDeAlMenos32Caracteres!
+      - Jwt__Issuer=AuthService
+      - Jwt__Audience=DepreciacionApp
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      asset-service:
+        condition: service_started
+    networks:
+      - depreciacion-network
+
+  report-service:
+    build:
+      context: ./ReportService
+      dockerfile: Dockerfile
+    container_name: report-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__ReportDB=Server=sqlserver;Database=ReportDB;User Id=sa;Password=Your_password123;TrustServerCertificate=True;
+      - DepreciationServiceUrl=http://depreciation-service:80
+      - Jwt__Key=UnaClaveSuperSecretaDeAlMenos32Caracteres!
+      - Jwt__Issuer=AuthService
+      - Jwt__Audience=DepreciacionApp
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      depreciation-service:
+        condition: service_started
+    networks:
+      - depreciacion-network
+
+  # ==========================================
+  # GATEWAY Y FRONTEND
+  # ==========================================
+  gateway:
+    build:
+      context: ./Gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - Jwt__Key=UnaClaveSuperSecretaDeAlMenos32Caracteres!
+      - Jwt__Issuer=AuthService
+      - Jwt__Audience=DepreciacionApp
+    ports:
+      - "5138:80"
+    depends_on:
+      - auth-service
+      - asset-service
+      - depreciation-service
+      - report-service
+    networks:
+      - depreciacion-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:5138
+    container_name: frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - gateway
+    networks:
+      - depreciacion-network
+
+volumes:
+  sql_data:
+
+networks:
+  depreciacion-network:
+    driver: bridge

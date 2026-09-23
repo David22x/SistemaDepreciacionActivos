@@ -1,0 +1,47 @@
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/auth/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "DownstreamPathTemplate": "/api/Auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "auth-service", "Port": 80 } ]
+    },
+    {
+      "UpstreamPathTemplate": "/assets/categorias",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/Categorias",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "asset-service", "Port": 80 } ]
+    },
+    {
+      "UpstreamPathTemplate": "/assets",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/api/Activos",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "asset-service", "Port": 80 } ]
+    },
+    {
+      "UpstreamPathTemplate": "/assets/{id}",
+      "UpstreamHttpMethod": [ "GET", "PUT", "DELETE" ],
+      "DownstreamPathTemplate": "/api/Activos/{id}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "asset-service", "Port": 80 } ]
+    },
+    {
+      "UpstreamPathTemplate": "/depreciation/calcular",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/api/Depreciation/calcular",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "depreciation-service", "Port": 80 } ]
+    },
+    {
+      "UpstreamPathTemplate": "/reports/{everything}",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/api/Report/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "report-service", "Port": 80 } ]
+    }
+  ],
+  "GlobalConfiguration": { "BaseUrl": "http://localhost:5138" }
+}

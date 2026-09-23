@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axiosClient from '../api/axiosClient';
+import AppLayout from '../components/AppLayout';
+import { consultarDepreciacion } from '../api/depreciationApi';
+import { generarPdf } from '../api/reportApi';
 import { formatMoney, formatDate } from '../utils/format';
 
 export default function ConsultaPage() {
@@ -9,17 +11,14 @@ export default function ConsultaPage() {
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [resultado, setResultado] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [exportando, setExportando] = useState(false);
   const [error, setError] = useState('');
 
   const consultar = async () => {
     setLoading(true);
     setError('');
     try {
-      const { data } = await axiosClient.post('/depreciation/calcular', {
-        activoId: Number(id),
-        fechaConsulta: fecha,
-      });
-
+      const { data } = await consultarDepreciacion(Number(id), fecha);
       setResultado({
         nombreActivo: data.activo,
         categoriaNombre: data.categoriaNombre ?? 'Sin categoría',
@@ -30,6 +29,7 @@ export default function ConsultaPage() {
         fechaConsulta: data.fechaConsulta,
         fechaAdquisicion: data.fechaAdquisicion,
         mesesTranscurridos: data.mesesTranscurridos,
+        desglosePorAnio: data.desglosePorAnio ?? [],
       });
     } catch (err) {
       setError(err.response?.data?.mensaje || 'Error al consultar la depreciación');
@@ -40,160 +40,138 @@ export default function ConsultaPage() {
 
   const exportarPdf = async () => {
     if (!resultado) return;
+    setError('');
+    setExportando(true);
     try {
-      const response = await axiosClient.post(
-        '/reports/depreciacion/pdf',
-        {
-          nombreActivo: resultado.nombreActivo,
-          categoria: resultado.categoriaNombre,
-          valorOriginal: resultado.valorOriginal,
-          descuentoMensual: resultado.descuentoMensual,
-          descuentoAcumulado: resultado.descuentoAcumulado,
-          valorActual: resultado.valorActual,
-          fechaConsulta: resultado.fechaConsulta,
-          mesesTranscurridos: resultado.mesesTranscurridos,
-        },
-        { responseType: 'blob' }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const response = await generarPdf({
+        nombreActivo: resultado.nombreActivo,
+        categoria: resultado.categoriaNombre,
+        valorOriginal: resultado.valorOriginal,
+        descuentoMensual: resultado.descuentoMensual,
+        descuentoAcumulado: resultado.descuentoAcumulado,
+        valorActual: resultado.valorActual,
+        fechaConsulta: resultado.fechaConsulta,
+        mesesTranscurridos: resultado.mesesTranscurridos,
+        desglosePorAnio: resultado.desglosePorAnio,
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `depreciacion-${id}.pdf`);
+      link.setAttribute('download', `depreciacion-activo-${id}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       setError(err.response?.data?.mensaje || 'Error al generar el PDF');
+    } finally {
+      setExportando(false);
     }
   };
 
-  const imprimir = () => window.print();
-
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <button style={styles.backBtn} onClick={() => navigate('/')}>
+    <AppLayout
+      title="Consulta de valor depreciado"
+      subtitle="Selecciona una fecha para ver el valor del activo en ese momento"
+      actions={
+        <button className="btn btn-ghost btn-sm no-print" onClick={() => navigate('/')}>
           ← Volver al listado
         </button>
-
-        <h2 style={styles.title}>Consulta de Valor Depreciado</h2>
-
-        <div style={styles.controls}>
-          <div style={styles.inlineField}>
-            <label style={styles.label}>Fecha de consulta:</label>
+      }
+    >
+      <div className="card-padded no-print" style={{ marginBottom: 'var(--space-5)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+          <div className="field">
+            <label htmlFor="fecha">Fecha de consulta</label>
             <input
-              style={styles.input}
+              id="fecha"
+              className="input"
               type="date"
               value={fecha}
               onChange={(e) => setFecha(e.target.value)}
             />
           </div>
-          <button style={styles.consultarBtn} onClick={consultar} disabled={loading}>
+          <button className="btn btn-primary" onClick={consultar} disabled={loading}>
             {loading ? 'Consultando...' : 'Consultar'}
           </button>
         </div>
+      </div>
 
-        {error && <p style={styles.error}>{error}</p>}
+      {error && <div className="alert alert-error" style={{ marginBottom: 'var(--space-4)' }}>{error}</div>}
 
-        {resultado && (
-          <>
-          <div className="consulta-hero">
-  <div>
-    <p className="consulta-hero-label">Valor actual del activo</p>
-    <p className="consulta-hero-value">{formatMoney(resultado.valorActual)}</p>
-    <p className="consulta-hero-sub">
-      {resultado.nombreActivo} · {resultado.categoriaNombre}
-    </p>
-  </div>
-</div>
+      {resultado && (
+        <div className="card-padded">
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h2 style={{ margin: 0 }}>{resultado.nombreActivo}</h2>
+              <span className="badge">{resultado.categoriaNombre}</span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                Valor actual ({formatDate(resultado.fechaConsulta)})
+              </div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--color-success)' }}>
+                {formatMoney(resultado.valorActual)}
+              </div>
+            </div>
+          </div>
 
-<section className="stats-grid">
-  <div className="stat-card">
-    <span className="stat-label">Fecha de adquisición</span>
-    <span className="stat-value">{formatDate(resultado.fechaAdquisicion)}</span>
-  </div>
-  <div className="stat-card">
-    <span className="stat-label">Valor original</span>
-    <span className="stat-value">{formatMoney(resultado.valorOriginal)}</span>
-  </div>
-  <div className="stat-card">
-    <span className="stat-label">Descuento acumulado</span>
-    <span className="stat-value">
-      {formatMoney(resultado.descuentoAcumulado)}
-    </span>
-  </div>
-</section>
-            <table style={styles.table}>
+          <section className="stats-grid" style={{ marginTop: 'var(--space-5)' }}>
+            <div className="stat-card">
+              <span className="stat-label">Fecha de adquisición</span>
+              <span className="stat-value" style={{ fontSize: '1rem' }}>{formatDate(resultado.fechaAdquisicion)}</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Valor original</span>
+              <span className="stat-value" style={{ fontSize: '1rem' }}>{formatMoney(resultado.valorOriginal)}</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Descuento acumulado</span>
+              <span className="stat-value" style={{ fontSize: '1rem' }}>{formatMoney(resultado.descuentoAcumulado)}</span>
+            </div>
+          </section>
+
+          <h3 style={{ marginTop: 'var(--space-5)', marginBottom: 4 }}>Desglose por año</h3>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginTop: 0 }}>
+            Valor del activo al cierre de cada año, desde su adquisición hasta la fecha consultada.
+          </p>
+
+          <div className="table-wrap" style={{ marginTop: 'var(--space-2)' }}>
+            <table className="data-table">
               <thead>
                 <tr>
-                  <th style={styles.th}>Concepto</th>
-                  <th style={styles.th}>Valor</th>
+                  <th>Año</th>
+                  <th style={{ textAlign: 'right' }}>Valor inicio de año</th>
+                  <th style={{ textAlign: 'right' }}>Descuento del año</th>
+                  <th style={{ textAlign: 'right' }}>Descuento acumulado</th>
+                  <th style={{ textAlign: 'right' }}>Valor al cierre</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td style={styles.td}>Activo</td>
-                  <td style={styles.td}>{resultado.nombreActivo}</td>
-                </tr>
-                <tr>
-                  <td style={styles.td}>Categoría</td>
-                  <td style={styles.td}>{resultado.categoriaNombre}</td>
-                </tr>
-                <tr>
-                  <td style={styles.td}>Fecha de adquisición</td>
-                  <td style={styles.td}>{resultado.fechaAdquisicion ? new Date(resultado.fechaAdquisicion).toLocaleDateString() : 'No disponible'}</td>
-                </tr>
-                <tr>
-                  <td style={styles.td}>Valor original</td>
-                  <td style={styles.td}>${resultado.valorOriginal?.toLocaleString()}</td>
-                </tr>
-                <tr>
-                  <td style={styles.td}>Descuento por devalúo (mensual)</td>
-                  <td style={styles.td}>${resultado.descuentoMensual?.toLocaleString()}</td>
-                </tr>
-                <tr>
-                  <td style={styles.td}>Descuento acumulado</td>
-                  <td style={styles.td}>${resultado.descuentoAcumulado?.toLocaleString()}</td>
-                </tr>
-                <tr style={styles.highlightRow}>
-                  <td style={styles.td}><strong>Valor actual del activo</strong></td>
-                  <td style={styles.td}><strong>${resultado.valorActual?.toLocaleString()}</strong></td>
-                </tr>
+                {resultado.desglosePorAnio.map((fila, idx) => {
+                  const esUltimo = idx === resultado.desglosePorAnio.length - 1;
+                  return (
+                    <tr key={fila.anio} style={esUltimo ? { background: '#f0fdf4' } : undefined}>
+                      <td>{fila.anio}</td>
+                      <td style={{ textAlign: 'right' }}>{formatMoney(fila.valorInicioAnio)}</td>
+                      <td style={{ textAlign: 'right' }}>{formatMoney(fila.descuentoDelAnio)}</td>
+                      <td style={{ textAlign: 'right' }}>{formatMoney(fila.descuentoAcumulado)}</td>
+                      <td style={{ textAlign: 'right' }}><strong>{formatMoney(fila.valorFinAnio)}</strong></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+          </div>
 
-            <div style={styles.actions}>
-              <button style={styles.pdfBtn} onClick={exportarPdf}>
-                📄 Exportar PDF
-              </button>
-              <button style={styles.printBtn} onClick={imprimir}>
-                🖨️ Imprimir
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+          <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', marginTop: 'var(--space-5)' }}>
+            <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimir</button>
+            <button className="btn btn-primary" onClick={exportarPdf} disabled={exportando}>
+              {exportando ? 'Generando PDF...' : '📄 Exportar PDF'}
+            </button>
+          </div>
+        </div>
+      )}
+    </AppLayout>
   );
 }
-
-const styles = {
-  container: { display: 'flex', justifyContent: 'center', padding: '2rem', minHeight: '100vh', background: '#f0f2f5' },
-  card: { background: '#fff', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '600px' },
-  backBtn: { marginBottom: '1rem', padding: '0.4rem 0.8rem', border: 'none', background: 'transparent', color: '#3498db', cursor: 'pointer', fontSize: '1rem' },
-  title: { marginTop: 0, color: '#1a1a2e' },
-  controls: { display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' },
-  inlineField: { display: 'flex', flexDirection: 'column', gap: '0.35rem' },
-  label: { fontWeight: 'bold', fontSize: '0.9rem' },
-  input: { padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd' },
-  consultarBtn: { padding: '0.5rem 1.2rem', borderRadius: '8px', border: 'none', background: '#3498db', color: '#fff', cursor: 'pointer' },
-  table: { width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem' },
-  th: { padding: '0.75rem 1rem', background: '#1a1a2e', color: '#fff', textAlign: 'left' },
-  td: { padding: '0.75rem 1rem', borderBottom: '1px solid #eee' },
-  highlightRow: { background: '#e8f8f0' },
-  actions: { display: 'flex', gap: '1rem', justifyContent: 'flex-end' },
-  pdfBtn: { padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#e74c3c', color: '#fff', cursor: 'pointer' },
-  printBtn: { padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#1a1a2e', color: '#fff', cursor: 'pointer' },
-  error: { color: '#e74c3c', marginBottom: '1rem' },
-};

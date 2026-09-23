@@ -8,5 +8,5 @@ public class ObtenerActivosHandler
     private readonly IActivoRepository _repo;
     public ObtenerActivosHandler(IActivoRepository repo) => _repo = repo;
 
-    public Task<List<Activo>> HandleAsync() => _repo.ObtenerTodosAsync();
+    public Task<List<Activo>> HandleAsync(int usuarioId) => _repo.ObtenerPorUsuarioAsync(usuarioId);
 }

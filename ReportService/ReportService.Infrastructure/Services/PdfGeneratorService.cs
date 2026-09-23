@@ -16,7 +16,7 @@ public class PdfGeneratorService : IPdfGenerator
             {
                 page.Size(PageSizes.A4);
                 page.Margin(2, Unit.Centimetre);
-                page.DefaultTextStyle(x => x.FontSize(11).FontFamily("Arial"));
+                page.DefaultTextStyle(x => x.FontSize(11));
 
                 // ---- HEADER ----
                 page.Header().Column(col =>
@@ -90,6 +90,49 @@ public class PdfGeneratorService : IPdfGenerator
                         FilaTabla("Descuento acumulado", data.DescuentoAcumulado);
                         FilaTabla("Valor actual del activo", data.ValorActual, true);
                     });
+
+                    if (data.DesglosePorAnio.Count > 0)
+                    {
+                        col.Item().Text("Desglose por año").Bold().FontSize(14);
+                        col.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(1.5f);
+                                columns.RelativeColumn(1.5f);
+                                columns.RelativeColumn(1.5f);
+                                columns.RelativeColumn(1.5f);
+                            });
+
+                            table.Header(header =>
+                            {
+                                foreach (var titulo in new[] { "Año", "Inicio", "Descuento", "Acumulado", "Cierre" })
+                                {
+                                    header.Cell().Background(Colors.Blue.Darken2)
+                                        .Padding(5).Text(titulo).FontColor(Colors.White).Bold();
+                                }
+                            });
+
+                            foreach (var fila in data.DesglosePorAnio)
+                            {
+                                var valores = new[]
+                                {
+                                    fila.Anio.ToString(),
+                                    $"${fila.ValorInicioAnio:N2}",
+                                    $"${fila.DescuentoDelAnio:N2}",
+                                    $"${fila.DescuentoAcumulado:N2}",
+                                    $"${fila.ValorFinAnio:N2}"
+                                };
+
+                                foreach (var valor in valores)
+                                {
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+                                        .Padding(5).Text(valor);
+                                }
+                            }
+                        });
+                    }
 
                     // Nota
                     col.Item().Text("Nota: El valor residual mínimo es del 10% del valor original (normativa ecuatoriana).")

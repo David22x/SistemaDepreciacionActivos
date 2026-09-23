@@ -37,6 +37,8 @@ public class AssetDbContext : DbContext
                   .HasColumnType("decimal(18,2)")
                   .IsRequired();
             entity.Property(e => e.FechaAdquisicion).IsRequired();
+            entity.Property(e => e.UsuarioId).IsRequired();
+            entity.HasIndex(e => e.UsuarioId);
 
             entity.HasOne(e => e.Categoria)
                   .WithMany(c => c.Activos)

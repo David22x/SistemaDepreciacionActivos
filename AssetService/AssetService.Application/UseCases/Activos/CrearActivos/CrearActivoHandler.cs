@@ -30,7 +30,8 @@ public class CrearActivoHandler
             Nombre = cmd.Nombre.Trim(),
             ValorOriginal = cmd.ValorOriginal,
             FechaAdquisicion = cmd.FechaAdquisicion,
-            CategoriaId = categoria.Id
+            CategoriaId = categoria.Id,
+            UsuarioId = cmd.UsuarioId
         };
 
         return await _activos.CrearAsync(activo);
