@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
+import AppLayout from '../components/AppLayout';
 
 export default function NuevoActivoPage() {
   const [form, setForm] = useState({
@@ -40,54 +41,53 @@ export default function NuevoActivoPage() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2>Registrar Nuevo Activo</h2>
-        {error && <p style={styles.error}>{error}</p>}
+    <AppLayout
+      title="Registrar nuevo activo"
+      subtitle="Completa los datos para incorporar un activo al sistema"
+      actions={<button className="btn btn-ghost btn-sm" onClick={() => navigate('/')}>← Volver al listado</button>}
+    >
+      <div className="card-padded asset-form-card">
+        {error && <div className="alert alert-error error-message">{error}</div>}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <label style={styles.label}>Nombre del activo</label>
-          <input style={styles.input} name="nombre" value={form.nombre} onChange={handleChange} required />
+        <form onSubmit={handleSubmit}>
+          <div className="field">
+            <label htmlFor="nombre">Nombre del activo</label>
+            <input className="input" id="nombre" name="nombre" value={form.nombre} onChange={handleChange} required />
+          </div>
 
-          <label style={styles.label}>Valor original (USD)</label>
-          <input style={styles.input} name="valorOriginal" type="number" step="0.01" value={form.valorOriginal} onChange={handleChange} required />
+          <div className="field">
+            <label htmlFor="valorOriginal">Valor original (USD)</label>
+            <input className="input" id="valorOriginal" name="valorOriginal" type="number" step="0.01" value={form.valorOriginal} onChange={handleChange} required />
+          </div>
 
-          <label style={styles.label}>Fecha de adquisición</label>
-          <input style={styles.input} name="fechaAdquisicion" type="date" value={form.fechaAdquisicion} onChange={handleChange} required />
+          <div className="field">
+            <label htmlFor="fechaAdquisicion">Fecha de adquisición</label>
+            <input className="input" id="fechaAdquisicion" name="fechaAdquisicion" type="date" value={form.fechaAdquisicion} onChange={handleChange} required />
+          </div>
 
-          <label style={styles.label}>Categoría</label>
-          <select style={styles.input} name="categoriaId" value={form.categoriaId} onChange={handleChange} required>
-            <option value="">Selecciona una categoría</option>
-            {categorias.map((cat) => {
-              const anios = cat.vidaUtilMeses ? Math.round(cat.vidaUtilMeses / 12) : 0;
-              return (
-                <option key={cat.id} value={cat.id}>{cat.nombre} — {anios} años</option>
-              );
-            })}
-          </select>
+          <div className="field">
+            <label htmlFor="categoriaId">Categoría</label>
+            <select className="input" id="categoriaId" name="categoriaId" value={form.categoriaId} onChange={handleChange} required>
+              <option value="">Selecciona una categoría</option>
+              {categorias.map((cat) => {
+                const anios = cat.vidaUtilMeses ? Math.round(cat.vidaUtilMeses / 12) : 0;
+                return (
+                  <option key={cat.id} value={cat.id}>{cat.nombre} - {anios} años</option>
+                );
+              })}
+            </select>
+          </div>
 
-          <div style={styles.actions}>
-            <button type="button" style={styles.cancelBtn} onClick={() => navigate('/')}>
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/')}>
               Cancelar
             </button>
-            <button type="submit" style={styles.submitBtn}>
+            <button type="submit" className="btn btn-primary">
               Guardar Activo
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </AppLayout>
   );
 }
-
-const styles = {
-  container: { display: 'flex', justifyContent: 'center', padding: '2rem', minHeight: '100vh', background: '#f0f2f5' },
-  card: { background: '#fff', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '480px' },
-  form: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  label: { fontWeight: 'bold', fontSize: '0.9rem', color: '#333' },
-  input: { padding: '0.6rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' },
-  actions: { display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' },
-  cancelBtn: { padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer' },
-  submitBtn: { padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#1a1a2e', color: '#fff', cursor: 'pointer' },
-  error: { color: '#e74c3c', fontSize: '0.9rem' },
-};
