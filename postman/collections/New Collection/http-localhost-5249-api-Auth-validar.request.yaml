@@ -12,4 +12,8 @@ headers:
     value: ""
     disabled: true
     description: ""
+body:
+  type: file
+  content:
+    src: ""
 order: 1789793001203

@@ -1,0 +1,23 @@
+$kind: http-request
+order: 1000
+method: GET
+url: '{{baseUrl}}/assets'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Respuesta exitosa (200)", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Respuesta es un array", function () {
+          var json = pm.response.json();
+          pm.expect(json).to.be.an("array");
+      });
+
+      // Guarda el ID del primer activo si existe
+      var json = pm.response.json();
+      if (json.length > 0) {
+          pm.collectionVariables.set("activoID", json[0].id);
+          console.log("activoID guardado:", json[0].id);
+      }

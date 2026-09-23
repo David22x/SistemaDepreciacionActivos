@@ -1,0 +1,22 @@
+$kind: http-request
+order: 1000
+method: POST
+url: '{{baseUrl}}/auth/register'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "NombreUsuario": "david",
+      "Email": "david@example.com",
+      "Password": "Password123!"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Registro exitoso (201)", function () {
+          pm.response.to.have.status(201);
+      });

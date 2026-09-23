@@ -1,0 +1,34 @@
+$kind: http-request
+order: 2000
+method: POST
+url: '{{baseUrl}}/auth/login'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "NombreUsuario": "david",
+      "Password": "Password123!"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Login exitoso (200)", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Respuesta contiene token", function () {
+          var json = pm.response.json();
+          pm.expect(json).to.have.property("token");
+          pm.expect(json.token).to.be.a("string").and.not.empty;
+      });
+
+      // Guarda el token automáticamente en la variable de colección
+      if (pm.response.code === 200) {
+          var json = pm.response.json();
+          pm.collectionVariables.set("token", json.token);
+          console.log("Token guardado:", json.token.substring(0, 30) + "...");
+      }

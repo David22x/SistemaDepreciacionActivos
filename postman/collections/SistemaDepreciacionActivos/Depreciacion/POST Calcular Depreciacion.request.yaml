@@ -1,0 +1,31 @@
+$kind: http-request
+name: 'POST Calcular Depreciación'
+order: 1000
+method: POST
+url: '{{baseUrl}}/depreciation/calcular'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "ActivoId": {{activoID}},
+      "FechaConsulta": null,
+      "FechaAdquisicion": null
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Depreciación calculada (200)", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Respuesta contiene campos de depreciación", function () {
+          var json = pm.response.json();
+          pm.expect(json).to.have.property("valorOriginal");
+          pm.expect(json).to.have.property("valorActual");
+          pm.expect(json).to.have.property("descuentoAcumulado");
+          pm.expect(json).to.have.property("mesesTranscurridos");
+      });

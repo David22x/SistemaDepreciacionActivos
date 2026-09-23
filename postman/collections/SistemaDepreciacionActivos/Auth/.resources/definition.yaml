@@ -1,0 +1,4 @@
+$kind: collection
+name: Auth
+description: 'Endpoints de autenticación: registro, login y validación de token JWT.'
+order: 1000

@@ -1,0 +1,9 @@
+$kind: collection
+name: "Depreciación"
+description: 'Cálculo de depreciación de activos por línea recta. Requiere JWT Bearer token.'
+order: 4000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'

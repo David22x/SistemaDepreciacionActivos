@@ -1,0 +1,23 @@
+$kind: http-request
+order: 4000
+method: PUT
+url: '{{baseUrl}}/assets/{{activoID}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "Nombre": "Laptop Dell XPS 15 (Actualizada)",
+      "ValorOriginal": 23000.00,
+      "FechaAdquisicion": "2024-01-15T00:00:00Z",
+      "CategoriaId": 1
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Activo actualizado (204)", function () {
+          pm.response.to.have.status(204);
+      });

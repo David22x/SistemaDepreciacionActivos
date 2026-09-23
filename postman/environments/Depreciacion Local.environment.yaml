@@ -1,0 +1,8 @@
+name: Depreciacion Local
+values:
+  - key: token
+    value: ''
+  - key: activoID
+    value: ''
+  - key: baseUrl
+    value: ''

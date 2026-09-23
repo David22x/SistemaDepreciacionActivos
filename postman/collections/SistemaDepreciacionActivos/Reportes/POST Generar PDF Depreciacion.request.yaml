@@ -1,0 +1,41 @@
+$kind: http-request
+name: 'POST Generar PDF Depreciación'
+order: 1000
+method: POST
+url: '{{baseUrl}}/reports/depreciacion/pdf'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "NombreActivo": "Laptop Dell XPS 15",
+      "Categoria": "Equipos de Cómputo",
+      "ValorOriginal": 25000.00,
+      "DescuentoMensual": 416.67,
+      "DescuentoAcumulado": 5000.00,
+      "ValorActual": 20000.00,
+      "FechaConsulta": "2025-01-15T00:00:00Z",
+      "MesesTranscurridos": 12,
+      "DesglosePorAnio": [
+        {
+          "Anio": 2024,
+          "ValorInicioAnio": 25000.00,
+          "DescuentoDelAnio": 5000.00,
+          "DescuentoAcumulado": 5000.00,
+          "ValorFinAnio": 20000.00
+        }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("PDF generado (200)", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Content-Type es application/pdf", function () {
+          pm.expect(pm.response.headers.get("Content-Type")).to.include("application/pdf");
+      });

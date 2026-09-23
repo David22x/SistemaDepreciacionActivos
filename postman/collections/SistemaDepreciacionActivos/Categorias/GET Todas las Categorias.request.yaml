@@ -1,0 +1,22 @@
+$kind: http-request
+name: 'GET Todas las Categorías'
+order: 1000
+method: GET
+url: '{{baseUrl}}/assets/categorias'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Respuesta exitosa (200)", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Respuesta es un array de categorías", function () {
+          var json = pm.response.json();
+          pm.expect(json).to.be.an("array");
+          if (json.length > 0) {
+              pm.expect(json[0]).to.have.property("id");
+              pm.expect(json[0]).to.have.property("nombre");
+              pm.expect(json[0]).to.have.property("vidaUtilMeses");
+          }
+      });

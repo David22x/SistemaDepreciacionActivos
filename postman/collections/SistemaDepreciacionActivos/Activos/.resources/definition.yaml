@@ -1,0 +1,9 @@
+$kind: collection
+name: Activos
+description: 'CRUD completo de activos fijos. Todos los endpoints requieren JWT Bearer token.'
+order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'

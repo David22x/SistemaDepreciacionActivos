@@ -1,0 +1,36 @@
+$kind: http-request
+order: 3000
+method: POST
+url: '{{baseUrl}}/assets'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "Nombre": "Laptop Dell XPS 15",
+      "ValorOriginal": 25000.00,
+      "FechaAdquisicion": "2024-01-15T00:00:00Z",
+      "CategoriaId": 1
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Activo creado (201)", function () {
+          pm.response.to.have.status(201);
+      });
+
+      pm.test("Respuesta contiene el nuevo activo", function () {
+          var json = pm.response.json();
+          pm.expect(json).to.have.property("id");
+          pm.expect(json.nombre).to.eql("Laptop Dell XPS 15");
+      });
+
+      // Guarda el ID del activo recién creado
+      if (pm.response.code === 201) {
+          var json = pm.response.json();
+          pm.collectionVariables.set("activoID", json.id);
+          console.log("Nuevo activoID guardado:", json.id);
+      }

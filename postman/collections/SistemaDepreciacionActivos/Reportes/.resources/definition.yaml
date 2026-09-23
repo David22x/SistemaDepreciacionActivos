@@ -1,0 +1,9 @@
+$kind: collection
+name: Reportes
+description: 'Generación de reportes PDF de depreciación. Requiere JWT Bearer token.'
+order: 5000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
